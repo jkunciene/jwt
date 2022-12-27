@@ -28,15 +28,31 @@ app.post("/api/refresh", (req, res)=> {
     if(!refreshTokens.includes(refreshToken)){
         return res.status(403).json("Refresh token is not valid!");
     }
-    //if everything is ok, create new access token, refresh token and send to user
+    jwt.verify(refreshToken, "myRefreshKey", (err, user)=> {
+        err && console.log(err);
+        refreshTokens = refreshTokens.filter(token => token !== refreshToken);
 
+        const newAccessToken = generateAccessToken(user);
+        const newRefreshToken = generateRefreshToken(user);
+
+        refreshTokens.push(newRefreshToken);
+
+        res.status(200).json({
+            accessToken: newAccessToken,
+            refreshToken: newRefreshToken,
+        })
+    });
+    //if everything is ok, create new access token, refresh token and send to user
 });
 const generateAccessToken = (user) => {return jwt.sign( { id: user.id, isAdmin: user.isAdmin }, 
             "mySecretKey", 
             { expiresIn: "15min"})  
-}
-const generateRefreshToken = (user) => {return jwt.sign( { id: user.id, isAdmin: user.isAdmin }, "myRefreshKey")  
-}
+};
+
+const generateRefreshToken = (user) => {return jwt.sign( { id: user.id, isAdmin: user.isAdmin },
+     "myRefreshKey")  
+};
+
 app.post("/api/login", (req, res) => {
     const { username, password } = req.body;
     const user = users.find((findUser) => {
@@ -53,6 +69,7 @@ app.post("/api/login", (req, res) => {
             username: user.username,
             isAdmin: user.isAdmin,
             acsessToken,
+            refreshToken
         })
     } else{
         res.status(400).json("Username or password incorrect!")
