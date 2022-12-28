@@ -101,6 +101,12 @@ app.delete("/api/users/:userId", verify, (req, res)=> {
     } else {
         res.status(403).json("you are not allowed to delete this user!")
     }
-})
+});
+
+app.post("/api/logout", verify, (req, res) => {
+    const refreshToken = req.body.token;
+    refreshTokens = refreshTokens.filter((token) => token !== refreshToken);
+    res.status(200).json("you are out successfully.")
+});
 
 app.listen(4000, ()=> console.log('Backend is runnig...'));
